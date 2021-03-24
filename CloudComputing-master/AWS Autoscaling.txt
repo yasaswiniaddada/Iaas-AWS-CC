@@ -1,0 +1,40 @@
+package com.amazonaws.services.autoscaling;
+
+import javax.annotation.Generated;
+import com.amazonaws.*;
+import com.amazonaws.regions.*;
+import com.amazonaws.services.autoscaling.model.*;
+import com.amazonaws.services.autoscaling.waiters.AmazonAutoScalingWaiters;
+
+public interface AWS/EC2xAutoScaling {
+
+    AWS/EC2xAutoScalingClient autoScaling = new AutoScaling().getClient();
+    try {
+        CreateLaunchRequest request = createLaunchRequest(formation);
+			autoScaling.createLaunchConfiguration(request);
+        this.console.write("Created launch configuration " + scaling.getName());
+    } catch (AlreadyExistsException e) {
+    this.console.write("Launch configuration " + scaling.getName() + " already exists");
+    }
+	
+    PutScalingPolicyRequest request = new PutScalingPolicyRequest().withAutoScalingGroupName(scaling.getGroup()).withPolicyName(scaling.getPolicy()).withScalingAdjustment(1).withAdjustmentType("ChangeInCapacity");
+    PutScalingPolicyResult result = autoScaling.putScalingPolicy(request);
+    this.console.write("Put scaling policy " + scaling.getPolicy());
+    
+    Dimension dimension = new Dimension().withName("AutoScalingGroupName").withValue(scaling.getGroup());
+    List<String> actions = new ArrayList<>();
+    actions.add(result.getPolicyARN());
+    
+	PutMetricAlarmRequest upRequest = new PutMetricAlarmRequest().withAlarmName(scaling.getAlarm()).withMetricName("CPUUtilization").withDimensions(dimension).withNamespace("AWS/EC2").withComparisonOperator(ComparisonOperator.GreaterThanThreshold).withStatistic(Statistic.Average).withUnit(StandardUnit.Percent).withThreshold(60d).withPeriod(300).withEvaluationPeriods(2).withAlarmActions(actions);
+    AmazonCloudWatchClient cloudWatch = new CloudWatch().getClient();
+    cloudWatch.putMetricAlarm(upRequest);
+    this.console.write("Put alarm " + scaling.getAlarm());
+    this.console.newLine();
+    List<Instance> instances = new ArrayList<>();
+    for (AutoScalingInstanceDetails instance : autoScaling.describeAutoScalingInstances().getAutoScalingInstances()) {
+        if (instance.getAutoScalingGroupName().equals(scaling.getGroup())) {
+            instances.add(new Ec2().getEC2InstanceById(instance.getInstanceId()));
+        }
+    }
+    return instances;
+}

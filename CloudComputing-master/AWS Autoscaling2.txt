@@ -1,0 +1,32 @@
+package com.amazonaws.services.autoscaling;
+
+import javax.annotation.Generated;
+import com.amazonaws.*;
+import com.amazonaws.regions.*;
+import com.amazonaws.services.autoscaling.model.*;
+import com.amazonaws.services.autoscaling.waiters.AmazonAutoScalingWaiters;
+
+public interface AWS/EC2xAutoScaling {
+
+    String logicalId = "asg id";
+    String instanceId = "instance id";
+    int minSize = 2;
+
+    when(autoScalingClient.describeAutoScalingGroups(
+            new DescribeAutoScalingGroupsRequest().withAutoScalingGroupNames(logicalId))
+    ).thenReturn(
+            new DescribeAutoScalingGroupsResult()
+                    .withAutoScalingGroups(
+                            new AutoScalingGroup().withInstances(
+                                    new Instance().withInstanceId(instanceId))
+                    .withMinSize(minSize)
+            )
+    );
+
+    autoScalingService.updateMinInstancesForAutoScalingGroup(logicalId, minSize - 1);
+
+    verify(autoScalingClient).updateAutoScalingGroup(new UpdateAutoScalingGroupRequest()
+            .withAutoScalingGroupName(logicalId)
+            .withMinSize(minSize - 1));
+}
+ 
